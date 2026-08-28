@@ -1,5 +1,7 @@
 # voceval
 
+[![ci](https://github.com/Sudheerreddy02/voceval/actions/workflows/ci.yml/badge.svg)](https://github.com/Sudheerreddy02/voceval/actions/workflows/ci.yml)
+
 A provider-agnostic real-time voice-agent runtime, plus a simulation-based
 evaluation framework that catches regressions in CI.
 

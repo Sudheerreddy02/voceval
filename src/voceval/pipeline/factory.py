@@ -45,7 +45,7 @@ def _live_llm(settings: Settings) -> LLM:
         raise RuntimeError("live profile needs OPENAI_API_KEY (or set profile to mock)")
     from voceval.pipeline.live.openai_llm import OpenAILLM
 
-    return OpenAILLM(settings.openai_api_key, settings.llm_model)
+    return OpenAILLM(settings.openai_api_key, settings.llm_model, settings.openai_base_url)
 
 
 def _live_tts(settings: Settings) -> TTS:

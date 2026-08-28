@@ -26,6 +26,7 @@ class Settings:
     time_scale: float = 1.0
 
     openai_api_key: str | None = None
+    openai_base_url: str | None = None
     llm_model: str = "gpt-4o-mini"
 
     deepgram_api_key: str | None = None
@@ -43,6 +44,7 @@ class Settings:
             sample_rate=int(os.getenv("VOCEVAL_SAMPLE_RATE", "16000")),
             time_scale=float(os.getenv("VOCEVAL_TIME_SCALE", "1.0")),
             openai_api_key=os.getenv("OPENAI_API_KEY") or None,
+            openai_base_url=os.getenv("OPENAI_BASE_URL") or None,
             llm_model=os.getenv("VOCEVAL_LLM_MODEL", "gpt-4o-mini"),
             deepgram_api_key=os.getenv("DEEPGRAM_API_KEY") or None,
             stt_model=os.getenv("VOCEVAL_STT_MODEL", "nova-2"),

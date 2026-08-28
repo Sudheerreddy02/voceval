@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator, Awaitable, Callable
 
+from voceval import clock
 from voceval.pipeline.base import LLM, STT, TTS, VAD
 from voceval.types import AudioChunk, LLMDelta, Message, ToolCall, Transcript
 
@@ -42,7 +43,7 @@ class MockSTT(STT):
                     yield Transcript(" ".join(spoken), is_final=False, confidence=0.6)
                     last_partial = now
             if chunk.final_hint:
-                await asyncio.sleep(self.final_latency)
+                await clock.sleep(self.final_latency)
                 yield Transcript(" ".join(spoken), is_final=True, confidence=0.95)
                 spoken = []
 
@@ -55,7 +56,7 @@ class MockLLM(LLM):
     async def complete(
         self, messages: list[Message], tools: list[dict] | None = None
     ) -> AsyncIterator[LLMDelta]:
-        await asyncio.sleep(self.first_token_latency)
+        await clock.sleep(self.first_token_latency)
         result = self.responder(list(messages))
         if asyncio.iscoroutine(result):
             result = await result
@@ -67,7 +68,7 @@ class MockLLM(LLM):
 
         for word in str(result).split():
             yield LLMDelta(text=word + " ")
-            await asyncio.sleep(0.02)
+            await clock.sleep(0.02)
         yield LLMDelta(done=True)
 
 
@@ -78,7 +79,7 @@ class MockTTS(TTS):
 
     async def synthesize(self, text: str) -> AsyncIterator[AudioChunk]:
         total = speaking_duration(text)
-        await asyncio.sleep(self.ttfa)
+        await clock.sleep(self.ttfa)
         emitted = 0.0
         frame = 0.1
         while emitted < total:
@@ -86,4 +87,4 @@ class MockTTS(TTS):
             samples = int(step * self.sample_rate)
             yield AudioChunk(b"\x00\x00" * samples, self.sample_rate, step, transcript_hint=None)
             emitted += step
-            await asyncio.sleep(step)
+            await clock.sleep(step)

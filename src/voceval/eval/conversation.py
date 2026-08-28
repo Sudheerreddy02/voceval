@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 from dataclasses import dataclass, field
 
+from voceval import clock
 from voceval.eval.scenario import CallerTurn
 from voceval.eval.simulated import SimulatedChannel
 from voceval.pipeline.orchestrator import Orchestrator
@@ -68,7 +69,7 @@ class Conversation:
 
     async def _drive(self, channel: SimulatedChannel) -> None:
         if self.orchestrator.greeting:
-            await channel.wait_for_reply()
+            await self._await_response()
 
         for i, turn in enumerate(self.script):
             following = self.script[i + 1] if i + 1 < len(self.script) else None
@@ -77,6 +78,14 @@ class Conversation:
 
             if following and following.interrupt:
                 await channel.wait_for_agent_start()
-                await asyncio.sleep(0.5)
+                await clock.sleep(0.5)
             else:
-                await channel.wait_for_reply()
+                await self._await_response()
+
+    async def _await_response(self, timeout: float = 15.0) -> None:
+        for _ in range(400):
+            if self.orchestrator.is_responding:
+                break
+            await asyncio.sleep(0.02)
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(self.orchestrator.response_done.wait(), timeout)

@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from voceval import clock
+
 
 def _load_dotenv(path: str = ".env") -> None:
     p = Path(path)
@@ -21,6 +23,7 @@ def _load_dotenv(path: str = ".env") -> None:
 class Settings:
     provider_profile: str = "mock"  # mock | live
     sample_rate: int = 16000
+    time_scale: float = 1.0
 
     openai_api_key: str | None = None
     llm_model: str = "gpt-4o-mini"
@@ -35,9 +38,10 @@ class Settings:
     @classmethod
     def load(cls) -> Settings:
         _load_dotenv()
-        return cls(
+        settings = cls(
             provider_profile=os.getenv("VOCEVAL_PROVIDER_PROFILE", "mock"),
             sample_rate=int(os.getenv("VOCEVAL_SAMPLE_RATE", "16000")),
+            time_scale=float(os.getenv("VOCEVAL_TIME_SCALE", "1.0")),
             openai_api_key=os.getenv("OPENAI_API_KEY") or None,
             llm_model=os.getenv("VOCEVAL_LLM_MODEL", "gpt-4o-mini"),
             deepgram_api_key=os.getenv("DEEPGRAM_API_KEY") or None,
@@ -46,6 +50,8 @@ class Settings:
             elevenlabs_api_key=os.getenv("ELEVENLABS_API_KEY") or None,
             tts_voice=os.getenv("VOCEVAL_TTS_VOICE") or None,
         )
+        clock.set_scale(settings.time_scale)
+        return settings
 
     @property
     def live(self) -> bool:

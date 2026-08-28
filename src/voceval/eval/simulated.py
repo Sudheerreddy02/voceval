@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 
+from voceval import clock
 from voceval.pipeline.mock import speaking_duration
 from voceval.transport.base import Channel
 from voceval.types import AudioChunk
@@ -59,7 +60,7 @@ class SimulatedChannel(Channel):
                     final_hint=(i == len(words) - 1),
                 )
             )
-            await asyncio.sleep(per_word)
+            await clock.sleep(per_word)
 
     async def wait_for_reply(self, quiet_gap: float = 0.4, timeout: float = 12.0) -> None:
         start = self._loop.time()

@@ -5,6 +5,7 @@ import contextlib
 from dataclasses import dataclass, field
 
 from voceval import clock
+from voceval.eval.persona import PersonaCaller
 from voceval.eval.scenario import CallerTurn
 from voceval.eval.simulated import SimulatedChannel
 from voceval.pipeline.orchestrator import Orchestrator
@@ -36,15 +37,19 @@ class Conversation:
     def __init__(
         self,
         orchestrator: Orchestrator,
-        script: list[CallerTurn],
+        script: list[CallerTurn] | None = None,
         *,
+        caller: PersonaCaller | None = None,
         scenario_name: str = "adhoc",
         sample_rate: int = 16000,
+        max_turns: int = 10,
     ) -> None:
         self.orchestrator = orchestrator
-        self.script = script
+        self.script = script or []
+        self.caller = caller
         self.scenario_name = scenario_name
         self.sample_rate = sample_rate
+        self.max_turns = max_turns
 
     async def run(self) -> Dialogue:
         channel = SimulatedChannel(self.sample_rate)
@@ -71,6 +76,10 @@ class Conversation:
         if self.orchestrator.greeting:
             await self._await_response()
 
+        if self.caller is not None:
+            await self._drive_persona(channel)
+            return
+
         for i, turn in enumerate(self.script):
             following = self.script[i + 1] if i + 1 < len(self.script) else None
             channel.mark_turn()
@@ -81,6 +90,16 @@ class Conversation:
                 await clock.sleep(0.5)
             else:
                 await self._await_response()
+
+    async def _drive_persona(self, channel: SimulatedChannel) -> None:
+        assert self.caller is not None
+        for _ in range(self.max_turns):
+            line = await self.caller.reply(list(self.orchestrator.turns))
+            if line is None:
+                return
+            channel.mark_turn()
+            await channel.caller_says(line)
+            await self._await_response()
 
     async def _await_response(self, timeout: float = 15.0) -> None:
         for _ in range(400):

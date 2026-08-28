@@ -36,6 +36,7 @@ class Scenario:
     script: list[CallerTurn]
     expect: Expect
     path: Path
+    max_turns: int = 8
 
 
 def _parse_turn(raw: object) -> CallerTurn:
@@ -72,6 +73,7 @@ def load_scenario(path: str | Path) -> Scenario:
         script=[_parse_turn(t) for t in caller.get("script", [])],
         expect=_parse_expect(data.get("expect", {})),
         path=path,
+        max_turns=int(caller.get("max_turns", 8)),
     )
 
 

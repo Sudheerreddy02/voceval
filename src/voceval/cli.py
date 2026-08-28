@@ -89,10 +89,11 @@ def twilio(
 def simulate(
     scenario: str = typer.Option(..., help="Path to a scenario YAML"),
     report: str = typer.Option("", help="Directory to write reports into"),
+    driver: str = typer.Option("script", help="script (the YAML lines) or persona (LLM caller)"),
 ) -> None:
     """Run one scenario and show the transcript and scores."""
     settings = Settings.load()
-    result = asyncio.run(run_scenario(load_scenario(scenario), settings))
+    result = asyncio.run(run_scenario(load_scenario(scenario), settings, driver))
 
     console.print(f"\n[bold]{result.scenario}[/] "
                   + ("[green]passed[/]" if result.passed else "[red]failed[/]"))
@@ -119,6 +120,7 @@ def eval(
     baseline: str = typer.Option("", help="Baseline JSON to compare against"),
     report: str = typer.Option("reports", help="Directory to write reports into"),
     update_baseline: bool = typer.Option(False, help="Overwrite the baseline with this run"),
+    driver: str = typer.Option("script", help="script (the YAML lines) or persona (LLM caller)"),
 ) -> None:
     """Run a scenario suite, write reports, and check for regressions."""
     settings = Settings.load()
@@ -127,7 +129,7 @@ def eval(
         console.print(f"[red]no scenarios found in {suite}[/]")
         raise typer.Exit(2)
 
-    results = asyncio.run(run_suite(scenarios, settings))
+    results = asyncio.run(run_suite(scenarios, settings, driver=driver))
     console.print(to_markdown(results))
     write_reports(results, report)
 

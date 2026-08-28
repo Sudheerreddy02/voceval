@@ -22,18 +22,18 @@ def build_providers(
             MockTTS(sample_rate=settings.sample_rate),
         )
 
-    llm = _live_llm(settings) or MockLLM(responder or echo)
-    tts = _live_tts(settings) or MockTTS(sample_rate=settings.sample_rate)
+    llm = live_llm_provider(settings) or MockLLM(responder or echo)
+    tts = live_tts_provider(settings) or MockTTS(sample_rate=settings.sample_rate)
 
     if simulated:
         return (MockVAD(), MockSTT(), llm, tts)
 
-    live_stt = _live_stt(settings)
+    live_stt = live_stt_provider(settings)
     vad: VAD = EnergyVAD() if live_stt else MockVAD()
     return (vad, live_stt or MockSTT(), llm, tts)
 
 
-def _live_stt(settings: Settings) -> STT | None:
+def live_stt_provider(settings: Settings) -> STT | None:
     if not settings.deepgram_api_key:
         return None
     from voceval.pipeline.live.deepgram import DeepgramSTT
@@ -41,7 +41,7 @@ def _live_stt(settings: Settings) -> STT | None:
     return DeepgramSTT(settings.deepgram_api_key, settings.stt_model, settings.sample_rate)
 
 
-def _live_llm(settings: Settings) -> LLM | None:
+def live_llm_provider(settings: Settings) -> LLM | None:
     if not settings.openai_api_key:
         return None
     from voceval.pipeline.live.openai_llm import OpenAILLM
@@ -49,7 +49,7 @@ def _live_llm(settings: Settings) -> LLM | None:
     return OpenAILLM(settings.openai_api_key, settings.llm_model, settings.openai_base_url)
 
 
-def _live_tts(settings: Settings) -> TTS | None:
+def live_tts_provider(settings: Settings) -> TTS | None:
     if settings.cartesia_api_key:
         from voceval.pipeline.live.cartesia import CartesiaTTS
 

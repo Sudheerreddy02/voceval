@@ -19,6 +19,26 @@ from voceval.eval.scenario import load_scenario, load_suite
 app = typer.Typer(add_completion=False, help="Voice agent runtime and evaluation.")
 console = Console()
 
+# some provider SDKs bundle an httpcore fork that logs noisily when a streaming
+# response is torn down by cancellation, even though the teardown itself is fine
+_STREAM_TEARDOWN_NOISE = "generator didn't stop after athrow"
+
+
+def _run(coro):
+    async def main():
+        loop = asyncio.get_running_loop()
+
+        def handler(lp, context):
+            exc = context.get("exception")
+            if exc and _STREAM_TEARDOWN_NOISE in str(exc):
+                return
+            lp.default_exception_handler(context)
+
+        loop.set_exception_handler(handler)
+        return await coro
+
+    return asyncio.run(main())
+
 
 @app.command()
 def chat(agent: str = typer.Option(..., help="Path to an agent entrypoint")) -> None:
@@ -50,7 +70,7 @@ def chat(agent: str = typer.Option(..., help="Path to an agent entrypoint")) -> 
         await channel.close()
         runner.cancel()
 
-    asyncio.run(loop())
+    _run(loop())
 
 
 @app.command()
@@ -64,7 +84,7 @@ def serve(
 
     console.print(f"listening on ws://{host}:{port}")
     with contextlib.suppress(KeyboardInterrupt):
-        asyncio.run(run_server(agent, host, port))
+        _run(run_server(agent, host, port))
 
 
 @app.command()
@@ -82,7 +102,7 @@ def twilio(
     console.print(TWIML.format(host=public_host))
     console.print(f"\nlistening on ws://{host}:{port}/twilio")
     with contextlib.suppress(KeyboardInterrupt):
-        asyncio.run(run_server(agent, host, port))
+        _run(run_server(agent, host, port))
 
 
 @app.command()
@@ -93,7 +113,7 @@ def simulate(
 ) -> None:
     """Run one scenario and show the transcript and scores."""
     settings = Settings.load()
-    result = asyncio.run(run_scenario(load_scenario(scenario), settings, driver))
+    result = _run(run_scenario(load_scenario(scenario), settings, driver))
 
     console.print(f"\n[bold]{result.scenario}[/] "
                   + ("[green]passed[/]" if result.passed else "[red]failed[/]"))
@@ -129,7 +149,7 @@ def eval(
         console.print(f"[red]no scenarios found in {suite}[/]")
         raise typer.Exit(2)
 
-    results = asyncio.run(run_suite(scenarios, settings, driver=driver))
+    results = _run(run_suite(scenarios, settings, driver=driver))
     console.print(to_markdown(results))
     write_reports(results, report)
 

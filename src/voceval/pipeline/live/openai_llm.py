@@ -49,24 +49,40 @@ class _PartialCall:
 
 
 class OpenAILLM(LLM):
-    def __init__(self, api_key: str, model: str, base_url: str | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        base_url: str | None = None,
+        *,
+        temperature: float = 0.5,
+        max_tokens: int = 200,
+    ) -> None:
         from openai import AsyncOpenAI
 
         self._client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.model = model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
 
     async def complete(
         self, messages: list[Message], tools: list[dict] | None = None
     ) -> AsyncIterator[LLMDelta]:
+        extra = {"reasoning_effort": "low"} if "gpt-oss" in self.model else {}
         stream = await self._client.chat.completions.create(
             model=self.model,
             messages=to_openai_messages(messages),
             tools=tools or None,
             stream=True,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            extra_body=extra,
         )
         partials: dict[int, _PartialCall] = {}
 
         async for chunk in stream:
+            if not chunk.choices:
+                continue
             delta = chunk.choices[0].delta
             if delta.content:
                 yield LLMDelta(text=delta.content)

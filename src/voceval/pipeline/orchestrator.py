@@ -12,8 +12,9 @@ from voceval.tracing.timeline import Timeline
 from voceval.transport.base import Channel
 from voceval.types import AudioChunk, Message, Speaker, ToolCall, Transcript, Turn
 
-_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+_SENTENCE_END = re.compile(r"(?<=[.!?])(?:\s+|(?=[A-Z]))")
 MAX_TOOL_STEPS = 4
+MAX_RESPONSE_CHARS = 600
 
 
 class Orchestrator:
@@ -132,6 +133,7 @@ class Orchestrator:
     async def _stream_reply(self, channel: Channel, turn: int) -> ToolCall | None:
         self.timeline.mark(tl.LLM_START, turn)
         buffer = ""
+        said_chars = 0
         said_something = False
         got_token = False
         async for delta in self.llm.complete(self.history, self.tools.schemas()):
@@ -148,8 +150,12 @@ class Orchestrator:
                 for sentence in parts[:-1]:
                     if sentence.strip():
                         await self._say(channel, turn, sentence.strip())
+                        said_chars += len(sentence)
                         said_something = True
                 buffer = parts[-1]
+            if said_chars > MAX_RESPONSE_CHARS:
+                buffer = ""
+                break
         if buffer.strip():
             await self._say(channel, turn, buffer.strip())
             said_something = True

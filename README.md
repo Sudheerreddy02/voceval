@@ -92,20 +92,36 @@ voceval serve --agent examples/restaurant_agent.py
 Then open `examples/browser_client/index.html`. Recognition and playback run in
 the browser; the agent runs on the server over a WebSocket. No keys needed.
 
-To use real providers, copy `.env.example` to `.env`, fill in the keys you have,
-and set `VOCEVAL_PROVIDER_PROFILE=live`.
+### Live providers
+
+Copy `.env.example` to `.env`, fill in the keys you have, and set
+`VOCEVAL_PROVIDER_PROFILE=live`. The runtime picks up OpenAI for the LLM,
+Deepgram for STT, and Cartesia or ElevenLabs for TTS; anything missing stays
+mocked. The eval suite runs the same way against the live stack.
+
+### Phone calls
+
+```bash
+voceval twilio --agent examples/restaurant_agent.py --public-host my.ngrok.io
+```
+
+Serves the agent over Twilio Media Streams (8 kHz mu-law, 20 ms frames). Barge-in
+sends a `clear` so the caller actually hears the agent stop. Point a Twilio
+number's stream at the printed URL.
 
 ## Repo layout
 
 ```
 src/voceval/
-  pipeline/      VAD, STT, LLM, TTS interfaces + mock and live implementations
-  tools/         tool registry + the restaurant agent's tools
-  tracing/       per-turn latency timeline and metric aggregation
-  eval/          simulated caller, scenarios, scorers, runner, regression gate
-  transport/     local audio, WebSocket server, Twilio Media Streams
-scenarios/       YAML scenario definitions
-examples/        runnable agents and a browser client
+  pipeline/       VAD, STT, LLM, TTS interfaces
+  pipeline/live/  OpenAI, Deepgram, Cartesia, ElevenLabs
+  tools/          tool registry
+  tracing/        latency timeline and metric aggregation
+  eval/           simulated caller, scenarios, scorers, runner, regression gate
+  transport/      queue channel, WebSocket server, Twilio Media Streams, mu-law
+scenarios/        YAML scenario definitions
+examples/         the restaurant agent and a browser client
+docs/             architecture and latency notes
 ```
 
 ## License

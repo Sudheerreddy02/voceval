@@ -1,0 +1,29 @@
+{
+  "scenarios": {
+    "asks_about_hours": {
+      "passed": true,
+      "p50_response_latency": 0.914,
+      "p95_response_latency": 1.16
+    },
+    "caller_interrupts": {
+      "passed": true,
+      "p50_response_latency": 0.671,
+      "p95_response_latency": 1.277
+    },
+    "happy_path_booking": {
+      "passed": true,
+      "p50_response_latency": 0.695,
+      "p95_response_latency": 1.229
+    },
+    "out_of_scope": {
+      "passed": true,
+      "p50_response_latency": 1.046,
+      "p95_response_latency": 1.046
+    },
+    "table_unavailable": {
+      "passed": true,
+      "p50_response_latency": 0.812,
+      "p95_response_latency": 0.952
+    }
+  }
+}

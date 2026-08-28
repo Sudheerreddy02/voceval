@@ -33,13 +33,13 @@ openai = ["openai>=1.40"]
 deepgram = ["deepgram-sdk>=3.5"]
 cartesia = ["cartesia>=1.0"]
 elevenlabs = ["elevenlabs>=1.5"]
-telephony = ["websockets>=12.0"]
+telephony = ["websockets>=13.0"]
 audio = ["numpy>=1.24", "sounddevice>=0.4.6"]
 all = [
     "openai>=1.40",
     "deepgram-sdk>=3.5",
     "cartesia>=1.0",
-    "websockets>=12.0",
+    "websockets>=13.0",
     "numpy>=1.24",
 ]
 dev = [
@@ -49,6 +49,7 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
     "types-PyYAML>=6.0",
+    "websockets>=13.0",
 ]
 
 [project.urls]

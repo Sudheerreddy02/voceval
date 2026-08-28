@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from pathlib import Path
 
 import typer
@@ -49,6 +50,20 @@ def chat(agent: str = typer.Option(..., help="Path to an agent entrypoint")) -> 
         runner.cancel()
 
     asyncio.run(loop())
+
+
+@app.command()
+def serve(
+    agent: str = typer.Option(..., help="Path to an agent entrypoint"),
+    host: str = typer.Option("127.0.0.1"),
+    port: int = typer.Option(8765),
+) -> None:
+    """Run the agent behind a WebSocket for the browser client in examples/."""
+    from voceval.transport.websocket import serve as run_server
+
+    console.print(f"listening on ws://{host}:{port}")
+    with contextlib.suppress(KeyboardInterrupt):
+        asyncio.run(run_server(agent, host, port))
 
 
 @app.command()

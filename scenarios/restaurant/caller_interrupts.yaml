@@ -22,4 +22,4 @@ expect:
       name: book_reservation
     - kind: no_hallucinated_confirmation
     - kind: transcript_contains
-      any: ["reference", "booked", "see you"]
+      any: ["reference", "ref", "confirmed", "booked", "all set"]

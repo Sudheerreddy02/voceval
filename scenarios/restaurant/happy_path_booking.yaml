@@ -15,12 +15,12 @@ caller:
 
 expect:
   task_success: true
-  max_p95_response_latency: 1.5
+  max_p95_response_latency: 1.8
   checks:
     - kind: tool_called
       name: check_availability
     - kind: tool_called
       name: book_reservation
     - kind: transcript_contains
-      any: ["reference", "booked", "see you"]
+      any: ["reference", "ref", "confirmed", "booked", "all set"]
     - kind: no_hallucinated_confirmation

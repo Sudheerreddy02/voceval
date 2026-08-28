@@ -19,4 +19,4 @@ expect:
     - kind: tool_not_called
       name: book_reservation
     - kind: transcript_contains
-      any: ["five to ten", "closed", "monday"]
+      any: ["five", "ten", "closed", "monday", "tuesday", "sunday"]

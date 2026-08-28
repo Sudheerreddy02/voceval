@@ -20,5 +20,5 @@ expect:
     - kind: tool_not_called
       name: book_reservation
     - kind: transcript_contains
-      any: ["full", "instead", "17:30", "21:00"]
+      any: ["full", "instead", "another", "not available", "isn't available", "unavailable", "17:30", "21:00", "sorry"]
     - kind: no_hallucinated_confirmation

@@ -3,28 +3,28 @@
   "scenarios": {
     "asks_about_hours": {
       "passed": true,
-      "p50_response_latency": 0.914,
-      "p95_response_latency": 1.16
+      "p50_response_latency": 0.867,
+      "p95_response_latency": 1.071
     },
     "caller_interrupts": {
       "passed": true,
-      "p50_response_latency": 0.656,
-      "p95_response_latency": 1.261
+      "p50_response_latency": 0.657,
+      "p95_response_latency": 1.289
     },
     "happy_path_booking": {
       "passed": true,
-      "p50_response_latency": 0.75,
-      "p95_response_latency": 1.227
+      "p50_response_latency": 0.711,
+      "p95_response_latency": 1.247
     },
     "out_of_scope": {
       "passed": true,
-      "p50_response_latency": 1.046,
-      "p95_response_latency": 1.046
+      "p50_response_latency": 1.063,
+      "p95_response_latency": 1.063
     },
     "table_unavailable": {
       "passed": true,
-      "p50_response_latency": 0.782,
-      "p95_response_latency": 0.978
+      "p50_response_latency": 0.765,
+      "p95_response_latency": 0.962
     }
   }
 }

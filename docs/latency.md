@@ -38,6 +38,22 @@ starts failing.
 ## Live providers
 
 Swap in real STT/LLM/TTS with a `.env` and `VOCEVAL_PROVIDER_PROFILE=live`. The
-model choice dominates: a small fast model keeps first-token under 400 ms, a
-larger one can push the whole turn past 1.5s. The eval suite runs the same way
-against either.
+eval suite runs the same way; `simulate` and `eval` feed the agent scripted text
+so they exercise the live LLM and TTS but keep the mock STT.
+
+A run against Groq (`openai/gpt-oss-20b`) for the LLM and Cartesia (`sonic-2`)
+for TTS:
+
+| scenario | p50 | p95 |
+| --- | --- | --- |
+| asks_about_hours | ~1.6s | ~2.4s |
+| happy_path_booking | ~1.3s | ~2.8s |
+| caller_interrupts | ~1.6s | ~1.8s |
+| table_unavailable | ~1.3s | ~1.3s |
+
+Every check passes except the 1.8s p95 limit on `happy_path_booking`, which the
+live stack misses at ~2.8s. That is the harness doing its job: LLM time to first
+token is the cost, and the booking turn pays it twice for the two tool calls.
+A faster first-token model (for example `gpt-4o-mini`) brings it back under.
+CI runs the mock stack, so the badge reflects correctness, not a given
+provider's latency.

@@ -21,6 +21,7 @@ htmlcov/
 # Eval artifacts
 .voceval/runs/
 reports/
+reports-*/
 *.wav
 !tests/**/*.wav
 !examples/**/*.wav

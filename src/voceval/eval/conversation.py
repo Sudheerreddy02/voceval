@@ -30,7 +30,18 @@ class Dialogue:
         return "\n".join(rows)
 
     def agent_said(self) -> str:
-        return " ".join(t.text for t in self.turns if t.speaker == Speaker.AGENT).lower()
+        joined = " ".join(t.text for t in self.turns if t.speaker == Speaker.AGENT)
+        return _normalize(joined)
+
+
+_PUNCT = str.maketrans(
+    {"’": "'", "‘": "'", "“": '"', "”": '"',
+     "–": "-", "—": "-", "‑": "-", " ": " "}
+)
+
+
+def _normalize(text: str) -> str:
+    return " ".join(text.translate(_PUNCT).lower().split())
 
 
 class Conversation:

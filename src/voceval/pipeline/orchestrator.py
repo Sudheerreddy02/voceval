@@ -58,10 +58,12 @@ class Orchestrator:
         reader = asyncio.create_task(self._read_inbound(channel))
         try:
             if self.greeting:
+                self._first_audio_done = False
                 self.is_responding = True
                 self.response_done.clear()
-                await self._say(channel, 0, self.greeting)
-                self.history.append(Message("assistant", self.greeting))
+                self._speak_task = asyncio.create_task(self._greet(channel))
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._speak_task
                 self.is_responding = False
                 self.response_done.set()
             async for transcript in self.stt.transcribe(self._feed_stt()):
@@ -113,6 +115,10 @@ class Orchestrator:
         self.is_responding = True
         self.response_done.clear()
         self._speak_task = asyncio.create_task(self._respond(channel, self._turn))
+
+    async def _greet(self, channel: Channel) -> None:
+        await self._say(channel, 0, self.greeting or "")
+        self.history.append(Message("assistant", self.greeting or ""))
 
     async def _respond(self, channel: Channel, turn: int) -> None:
         try:

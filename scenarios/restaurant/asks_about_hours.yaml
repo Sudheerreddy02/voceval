@@ -1,0 +1,22 @@
+name: asks_about_hours
+description: A quick question about opening hours, no booking.
+
+agent:
+  entrypoint: examples/restaurant_agent.py
+
+caller:
+  persona: Someone deciding whether to come by tonight.
+  goal: Find out whether the restaurant is open on Mondays.
+  script:
+    - "Hi, are you open on Mondays?"
+    - "Got it, thanks."
+
+expect:
+  task_success: true
+  checks:
+    - kind: tool_called
+      name: restaurant_hours
+    - kind: tool_not_called
+      name: book_reservation
+    - kind: transcript_contains
+      any: ["five to ten", "closed", "monday"]

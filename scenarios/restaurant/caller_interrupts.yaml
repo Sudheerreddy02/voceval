@@ -1,0 +1,25 @@
+name: caller_interrupts
+description: The caller talks over the agent mid-sentence. The agent should stop quickly and still finish the booking.
+
+agent:
+  entrypoint: examples/restaurant_agent.py
+
+caller:
+  persona: A busy caller who cuts in before the agent finishes.
+  goal: Book a table for two at 7pm under Delgado, interrupting along the way.
+  script:
+    - "Hi, I'd like to book a table for tonight."
+    - text: "Two people at 7pm, under Delgado."
+      interrupt: true
+    - "Yeah that's right, thanks."
+
+expect:
+  task_success: true
+  max_interruption_response: 0.5
+  checks:
+    - kind: caller_interrupted_agent
+    - kind: tool_called
+      name: book_reservation
+    - kind: no_hallucinated_confirmation
+    - kind: transcript_contains
+      any: ["reference", "booked", "see you"]

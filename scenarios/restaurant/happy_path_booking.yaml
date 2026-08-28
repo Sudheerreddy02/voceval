@@ -1,0 +1,26 @@
+name: happy_path_booking
+description: A regular books a table for two, nothing unusual.
+
+agent:
+  entrypoint: examples/restaurant_agent.py
+
+caller:
+  persona: A friendly regular who speaks clearly and knows what they want.
+  goal: Book a table for two tonight at 7pm under the name Rivera.
+  script:
+    - "Hi, I'd like to book a table for tonight."
+    - "Two people, at 7pm."
+    - "It's under Rivera. R I V E R A."
+    - "Perfect, thanks."
+
+expect:
+  task_success: true
+  max_p95_response_latency: 1.5
+  checks:
+    - kind: tool_called
+      name: check_availability
+    - kind: tool_called
+      name: book_reservation
+    - kind: transcript_contains
+      any: ["reference", "booked", "see you"]
+    - kind: no_hallucinated_confirmation

@@ -1,0 +1,21 @@
+name: out_of_scope
+description: The caller asks about something the agent shouldn't handle. It should hand off.
+
+agent:
+  entrypoint: examples/restaurant_agent.py
+
+caller:
+  persona: A caller with a question unrelated to reservations.
+  goal: Ask whether the restaurant sells gift cards.
+  script:
+    - "Do you sell gift cards?"
+
+expect:
+  task_success: true
+  checks:
+    - kind: tool_called
+      name: transfer_to_host
+    - kind: tool_not_called
+      name: book_reservation
+    - kind: transcript_contains
+      any: ["host", "connect"]

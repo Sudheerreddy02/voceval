@@ -1,0 +1,24 @@
+name: table_unavailable
+description: The requested slot is full. The agent should offer alternatives and not invent a booking.
+
+agent:
+  entrypoint: examples/restaurant_agent.py
+
+caller:
+  persona: A caller planning a birthday dinner for a large group.
+  goal: Get a table for nine at 8pm, or hear the alternatives.
+  script:
+    - "I'd like a table tonight."
+    - "Nine people at 8pm."
+    - "The name is Alvarez."
+
+expect:
+  task_success: true
+  checks:
+    - kind: tool_called
+      name: check_availability
+    - kind: tool_not_called
+      name: book_reservation
+    - kind: transcript_contains
+      any: ["full", "instead", "17:30", "21:00"]
+    - kind: no_hallucinated_confirmation

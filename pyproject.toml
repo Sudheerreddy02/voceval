@@ -30,15 +30,16 @@ dependencies = [
 
 [project.optional-dependencies]
 openai = ["openai>=1.40"]
-deepgram = ["deepgram-sdk>=3.5"]
-cartesia = ["cartesia>=1.0"]
-elevenlabs = ["elevenlabs>=1.5"]
+deepgram = ["deepgram-sdk>=7.0"]
+cartesia = ["cartesia>=4.0"]
+elevenlabs = ["elevenlabs>=2.0"]
 telephony = ["websockets>=13.0"]
 audio = ["numpy>=1.24", "sounddevice>=0.4.6"]
 all = [
     "openai>=1.40",
-    "deepgram-sdk>=3.5",
-    "cartesia>=1.0",
+    "deepgram-sdk>=7.0",
+    "cartesia>=4.0",
+    "elevenlabs>=2.0",
     "websockets>=13.0",
     "numpy>=1.24",
 ]

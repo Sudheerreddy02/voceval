@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from collections.abc import AsyncIterator
 
 from voceval.pipeline.base import TTS
@@ -17,7 +18,7 @@ class CartesiaTTS(TTS):
         self.sample_rate = sample_rate
 
     async def synthesize(self, text: str) -> AsyncIterator[AudioChunk]:
-        stream = self._client.tts.sse(
+        stream = await self._client.tts.sse(
             model_id="sonic-2",
             transcript=text,
             voice={"mode": "id", "id": self.voice},
@@ -27,7 +28,11 @@ class CartesiaTTS(TTS):
                 "sample_rate": self.sample_rate,
             },
         )
-        async for chunk in stream:
-            data = getattr(chunk, "audio", None) or b""
+        async for event in stream:
+            if getattr(event, "type", None) != "chunk":
+                continue
+            data = event.data
+            if isinstance(data, str):
+                data = base64.b64decode(data)
             if data:
                 yield AudioChunk(data, self.sample_rate, len(data) / 2 / self.sample_rate)

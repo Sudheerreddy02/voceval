@@ -68,6 +68,24 @@ def serve(
 
 
 @app.command()
+def twilio(
+    agent: str = typer.Option(..., help="Path to an agent entrypoint"),
+    public_host: str = typer.Option(..., help="Public host Twilio will reach, e.g. my.ngrok.io"),
+    host: str = typer.Option("0.0.0.0"),
+    port: int = typer.Option(8770),
+) -> None:
+    """Serve the agent for Twilio Media Streams. Point a number's stream at it."""
+    from voceval.transport.twilio import TWIML
+    from voceval.transport.twilio import serve as run_server
+
+    console.print("configure the number's TwiML webhook to return:\n")
+    console.print(TWIML.format(host=public_host))
+    console.print(f"\nlistening on ws://{host}:{port}/twilio")
+    with contextlib.suppress(KeyboardInterrupt):
+        asyncio.run(run_server(agent, host, port))
+
+
+@app.command()
 def simulate(
     scenario: str = typer.Option(..., help="Path to a scenario YAML"),
     report: str = typer.Option("", help="Directory to write reports into"),

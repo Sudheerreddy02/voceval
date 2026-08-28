@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import AsyncIterator
 
@@ -30,6 +31,14 @@ def to_openai_messages(history: list[Message]) -> list[dict]:
         else:
             out.append({"role": m.role, "content": m.content})
     return out
+
+
+def _retry_after(exc: Exception, default: float) -> float:
+    header = getattr(getattr(exc, "response", None), "headers", {}) or {}
+    try:
+        return min(float(header.get("retry-after", default)), 30.0)
+    except (TypeError, ValueError):
+        return default
 
 
 class _PartialCall:
@@ -69,34 +78,45 @@ class OpenAILLM(LLM):
         self, messages: list[Message], tools: list[dict] | None = None
     ) -> AsyncIterator[LLMDelta]:
         extra = {"reasoning_effort": "low"} if "gpt-oss" in self.model else {}
-        stream = await self._client.chat.completions.create(
-            model=self.model,
-            messages=to_openai_messages(messages),
-            tools=tools or None,
-            stream=True,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-            extra_body=extra,
-        )
         partials: dict[int, _PartialCall] = {}
 
-        async for chunk in stream:
-            if not chunk.choices:
-                continue
-            delta = chunk.choices[0].delta
-            if delta.content:
-                yield LLMDelta(text=delta.content)
-            for call in delta.tool_calls or []:
-                partial = partials.setdefault(call.index, _PartialCall())
-                if call.id:
-                    partial.id = call.id
-                if call.function and call.function.name:
-                    partial.name = call.function.name
-                if call.function and call.function.arguments:
-                    partial.arguments += call.function.arguments
+        async with await self._open_stream(messages, tools, extra) as stream:
+            async for chunk in stream:
+                if not chunk.choices:
+                    continue
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    yield LLMDelta(text=delta.content)
+                for call in delta.tool_calls or []:
+                    partial = partials.setdefault(call.index, _PartialCall())
+                    if call.id:
+                        partial.id = call.id
+                    if call.function and call.function.name:
+                        partial.name = call.function.name
+                    if call.function and call.function.arguments:
+                        partial.arguments += call.function.arguments
 
         for partial in partials.values():
             assembled = partial.assemble()
             if assembled:
                 yield LLMDelta(tool_call=assembled)
         yield LLMDelta(done=True)
+
+    async def _open_stream(self, messages, tools, extra):
+        from openai import RateLimitError
+
+        for attempt in range(5):
+            try:
+                return await self._client.chat.completions.create(
+                    model=self.model,
+                    messages=to_openai_messages(messages),
+                    tools=tools or None,
+                    stream=True,
+                    temperature=self.temperature,
+                    max_tokens=self.max_tokens,
+                    extra_body=extra,
+                )
+            except RateLimitError as exc:
+                if attempt == 4:
+                    raise
+                await asyncio.sleep(_retry_after(exc, default=2 ** attempt))

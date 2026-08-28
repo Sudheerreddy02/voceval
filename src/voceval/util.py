@@ -1,7 +1,21 @@
 from __future__ import annotations
 
+import contextlib
+
 from voceval import clock
 from voceval.types import AudioChunk
+
+
+async def aclose_stream(stream: object) -> None:
+    """Best-effort close for a provider's response stream, so a cancelled turn
+    doesn't leave an HTTP connection half-read."""
+    closer = getattr(stream, "close", None) or getattr(stream, "aclose", None)
+    if closer is None:
+        return
+    with contextlib.suppress(Exception):
+        result = closer()
+        if result is not None:
+            await result
 
 WORDS_PER_MINUTE = 150.0
 SILENCE = b"\x00\x00"

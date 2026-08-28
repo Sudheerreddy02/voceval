@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 
 from voceval.pipeline.base import TTS
 from voceval.types import AudioChunk
+from voceval.util import aclose_stream
 
 DEFAULT_VOICE = "JBFqnCBsd6RMkjVDRZzb"
 _SUPPORTED = {8000, 16000, 22050, 24000, 44100}
@@ -24,6 +25,9 @@ class ElevenLabsTTS(TTS):
             model_id="eleven_turbo_v2_5",
             output_format=f"pcm_{self.sample_rate}",
         )
-        async for data in stream:
-            if data:
-                yield AudioChunk(data, self.sample_rate, len(data) / 2 / self.sample_rate)
+        try:
+            async for data in stream:
+                if data:
+                    yield AudioChunk(data, self.sample_rate, len(data) / 2 / self.sample_rate)
+        finally:
+            await aclose_stream(stream)

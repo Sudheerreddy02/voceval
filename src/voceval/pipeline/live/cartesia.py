@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 
 from voceval.pipeline.base import TTS
 from voceval.types import AudioChunk
+from voceval.util import aclose_stream
 
 DEFAULT_VOICE = "a0e99841-438c-4a64-b679-ae501e7d6091"
 
@@ -28,11 +29,14 @@ class CartesiaTTS(TTS):
                 "sample_rate": self.sample_rate,
             },
         )
-        async for event in stream:
-            if getattr(event, "type", None) != "chunk":
-                continue
-            data = event.data
-            if isinstance(data, str):
-                data = base64.b64decode(data)
-            if data:
-                yield AudioChunk(data, self.sample_rate, len(data) / 2 / self.sample_rate)
+        try:
+            async for event in stream:
+                if getattr(event, "type", None) != "chunk":
+                    continue
+                data = event.data
+                if isinstance(data, str):
+                    data = base64.b64decode(data)
+                if data:
+                    yield AudioChunk(data, self.sample_rate, len(data) / 2 / self.sample_rate)
+        finally:
+            await aclose_stream(stream)

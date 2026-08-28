@@ -74,7 +74,7 @@ class Conversation:
         for i, turn in enumerate(self.script):
             following = self.script[i + 1] if i + 1 < len(self.script) else None
             channel.mark_turn()
-            await channel.caller_says(turn.text, interrupt=turn.interrupt)
+            await channel.caller_says(turn.text)
 
             if following and following.interrupt:
                 await channel.wait_for_agent_start()

@@ -6,15 +6,9 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from voceval import clock
 from voceval.pipeline.base import LLM, STT, TTS, VAD
 from voceval.types import AudioChunk, LLMDelta, Message, ToolCall, Transcript
-
-WORDS_PER_MINUTE = 150.0
+from voceval.util import speaking_duration
 
 Responder = Callable[[list[Message]], "str | ToolCall | Awaitable[str | ToolCall]"]
-
-
-def speaking_duration(text: str) -> float:
-    words = max(len(text.split()), 1)
-    return words / WORDS_PER_MINUTE * 60.0
 
 
 class MockVAD(VAD):

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 from pathlib import Path
 
 import typer
@@ -114,12 +115,21 @@ def eval(
 
     if update_baseline:
         target = baseline or str(Path(".voceval") / "baseline.json")
-        save_baseline(results, target)
+        save_baseline(results, target, settings.time_scale)
         console.print(f"baseline written to {target}")
         return
 
     failed = [r for r in results if not r.passed]
-    regressions = compare(baseline, results) if baseline and Path(baseline).exists() else []
+    regressions = []
+    if baseline and Path(baseline).exists():
+        base_scale = json.loads(Path(baseline).read_text(encoding="utf-8")).get("time_scale", 1.0)
+        same_scale = abs(base_scale - settings.time_scale) < 1e-9
+        if not same_scale:
+            console.print(
+                f"[yellow]note[/] baseline recorded at time scale {base_scale}, "
+                f"running at {settings.time_scale}; latency checks skipped"
+            )
+        regressions = compare(baseline, results, check_latency=same_scale)
 
     for reg in regressions:
         console.print(f"[red]regression[/] {reg.scenario}: {reg.kind} — {reg.detail}")

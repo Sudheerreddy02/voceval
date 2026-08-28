@@ -1,4 +1,5 @@
 {
+  "time_scale": 1.0,
   "scenarios": {
     "asks_about_hours": {
       "passed": true,
@@ -7,13 +8,13 @@
     },
     "caller_interrupts": {
       "passed": true,
-      "p50_response_latency": 0.671,
-      "p95_response_latency": 1.277
+      "p50_response_latency": 0.656,
+      "p95_response_latency": 1.261
     },
     "happy_path_booking": {
       "passed": true,
-      "p50_response_latency": 0.695,
-      "p95_response_latency": 1.229
+      "p50_response_latency": 0.75,
+      "p95_response_latency": 1.227
     },
     "out_of_scope": {
       "passed": true,
@@ -22,8 +23,8 @@
     },
     "table_unavailable": {
       "passed": true,
-      "p50_response_latency": 0.812,
-      "p95_response_latency": 0.952
+      "p50_response_latency": 0.782,
+      "p95_response_latency": 0.978
     }
   }
 }

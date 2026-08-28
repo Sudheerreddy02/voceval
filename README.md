@@ -83,6 +83,15 @@ voceval eval --suite scenarios/restaurant --baseline .voceval/baseline.json
 Set `VOCEVAL_TIME_SCALE=0.1` to run the suite in a few seconds instead of real
 time while iterating.
 
+### Talk to it in the browser
+
+```bash
+voceval serve --agent examples/restaurant_agent.py
+```
+
+Then open `examples/browser_client/index.html`. Recognition and playback run in
+the browser; the agent runs on the server over a WebSocket. No keys needed.
+
 To use real providers, copy `.env.example` to `.env`, fill in the keys you have,
 and set `VOCEVAL_PROVIDER_PROFILE=live`.
 

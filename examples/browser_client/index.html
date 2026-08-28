@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>voceval browser client</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+  #log { border: 1px solid #ccc; border-radius: 6px; padding: 1rem; min-height: 220px; }
+  .caller { color: #1565c0; }
+  .agent { color: #2e7d32; }
+  .interrupted { opacity: 0.6; }
+  form { display: flex; gap: 0.5rem; margin-top: 1rem; }
+  input { flex: 1; padding: 0.5rem; }
+  button { padding: 0.5rem 1rem; }
+  #mic[aria-pressed="true"] { background: #2e7d32; color: #fff; }
+</style>
+</head>
+<body>
+<h1>voceval</h1>
+<p>Run <code>voceval serve --agent examples/restaurant_agent.py</code>, then talk or type.
+Speech recognition and playback use the browser; the agent runs on the server.</p>
+
+<div id="log"></div>
+
+<form id="say">
+  <input id="text" placeholder="Type a message" autocomplete="off">
+  <button type="submit">Send</button>
+  <button type="button" id="mic" aria-pressed="false">Mic</button>
+</form>
+
+<script>
+const log = document.getElementById("log");
+const ws = new WebSocket("ws://127.0.0.1:8765");
+
+function line(speaker, text, interrupted) {
+  const p = document.createElement("p");
+  p.className = speaker + (interrupted ? " interrupted" : "");
+  p.textContent = speaker + ": " + text;
+  log.append(p);
+  log.scrollTop = log.scrollHeight;
+}
+
+ws.addEventListener("message", (event) => {
+  const msg = JSON.parse(event.data);
+  if (msg.type === "turn") {
+    line(msg.speaker, msg.text, msg.interrupted);
+    if (msg.speaker === "agent" && !msg.interrupted && window.speechSynthesis) {
+      speechSynthesis.speak(new SpeechSynthesisUtterance(msg.text));
+    }
+  } else if (msg.type === "metrics") {
+    line("system", "p95 response " + msg.data.p95_response_latency + "s");
+  }
+});
+
+function send(text) {
+  if (text.trim() && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: "say", text }));
+  }
+}
+
+document.getElementById("say").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.getElementById("text");
+  send(input.value);
+  input.value = "";
+});
+
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const mic = document.getElementById("mic");
+if (!Recognition) {
+  mic.disabled = true;
+} else {
+  const recognition = new Recognition();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.addEventListener("result", (e) => {
+    send(e.results[e.results.length - 1][0].transcript);
+  });
+  mic.addEventListener("click", () => {
+    const on = mic.getAttribute("aria-pressed") === "true";
+    if (on) recognition.stop();
+    else recognition.start();
+    mic.setAttribute("aria-pressed", String(!on));
+  });
+}
+</script>
+</body>
+</html>

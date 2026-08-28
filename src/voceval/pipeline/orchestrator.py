@@ -28,6 +28,7 @@ class Orchestrator:
         system_prompt: str,
         greeting: str | None = None,
         sample_rate: int = 16000,
+        endpoint_silence: float = 0.5,
     ) -> None:
         self.vad = vad
         self.stt = stt
@@ -36,6 +37,7 @@ class Orchestrator:
         self.tools = tools
         self.greeting = greeting
         self.sample_rate = sample_rate
+        self.endpoint_silence = endpoint_silence
 
         self.timeline = Timeline()
         self.history: list[Message] = [Message("system", system_prompt)]
@@ -44,6 +46,7 @@ class Orchestrator:
         self._audio_q: asyncio.Queue[AudioChunk] = asyncio.Queue()
         self._turn = 0  # turn 0 is the greeting; caller turns start at 1
         self._caller_speaking = False
+        self._silence_run = 0.0
         self._speak_task: asyncio.Task | None = None
         self._first_audio_done = False
         self.is_responding = False
@@ -69,17 +72,27 @@ class Orchestrator:
 
     async def _read_inbound(self, channel: Channel) -> None:
         async for chunk in channel.inbound():
-            speech = self.vad.is_speech(chunk)
-            if speech and not self._caller_speaking:
-                self._caller_speaking = True
-                self._turn += 1
-                self.timeline.mark(tl.CALLER_SPEECH_START, self._turn)
-                if self._is_speaking():
-                    await self._barge_in(channel, self._turn)
-            if chunk.final_hint:
-                self._caller_speaking = False
-                self.timeline.mark(tl.CALLER_SPEECH_END, self._turn)
+            if self.vad.is_speech(chunk):
+                self._silence_run = 0.0
+                if not self._caller_speaking:
+                    self._caller_speaking = True
+                    self._turn += 1
+                    self.timeline.mark(tl.CALLER_SPEECH_START, self._turn)
+                    if self._is_speaking():
+                        await self._barge_in(channel, self._turn)
+            elif self._caller_speaking:
+                self._silence_run += chunk.duration
+                if self._silence_run >= self.endpoint_silence:
+                    self._end_caller_turn()
+
+            if chunk.final_hint and self._caller_speaking:
+                self._end_caller_turn()
             await self._audio_q.put(chunk)
+
+    def _end_caller_turn(self) -> None:
+        self._caller_speaking = False
+        self._silence_run = 0.0
+        self.timeline.mark(tl.CALLER_SPEECH_END, self._turn)
 
     async def _feed_stt(self) -> AsyncIterator[AudioChunk]:
         while True:
@@ -88,6 +101,8 @@ class Orchestrator:
     async def _on_transcript(self, transcript: Transcript, channel: Channel) -> None:
         if not transcript.is_final:
             return
+        if self._caller_speaking or not self.timeline.of_kind(tl.CALLER_SPEECH_END, self._turn):
+            self._end_caller_turn()
         self.timeline.mark(tl.STT_FINAL, self._turn, text=transcript.text)
         self.turns.append(
             Turn(Speaker.CALLER, transcript.text, self.timeline.now(), self.timeline.now())

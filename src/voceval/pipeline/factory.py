@@ -4,6 +4,7 @@ from voceval.config import Settings
 from voceval.pipeline.base import LLM, STT, TTS, VAD
 from voceval.pipeline.mock import MockLLM, MockSTT, MockTTS, MockVAD, Responder
 from voceval.pipeline.responders import echo
+from voceval.pipeline.vad import EnergyVAD
 
 
 def build_providers(
@@ -13,7 +14,7 @@ def build_providers(
         return _mock_stack(settings, responder)
 
     return (
-        MockVAD(),
+        EnergyVAD(),
         _live_stt(settings),
         _live_llm(settings),
         _live_tts(settings),

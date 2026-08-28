@@ -60,18 +60,28 @@ persona and a goal) and records the full timeline for scoring.
 ## Quickstart
 
 ```bash
-python -m venv .venv && . .venv/Scripts/activate   # Windows
+python -m venv .venv
+.venv\Scripts\activate        # Windows; use source .venv/bin/activate elsewhere
 pip install -e ".[dev]"
+```
 
-# 1. Talk to the restaurant agent in your terminal (mock providers, no keys)
+```bash
+# talk to the restaurant agent from the terminal (mock providers, no keys)
 voceval chat --agent examples/restaurant_agent.py
+```
 
-# 2. Run one scenario and print the transcript + scores
+```bash
+# run one scenario and print the transcript, checks and metrics
 voceval simulate --scenario scenarios/restaurant/happy_path_booking.yaml
+```
 
-# 3. Run the whole suite and compare against the baseline (this is what CI runs)
+```bash
+# run the whole suite and compare against the baseline, same as CI
 voceval eval --suite scenarios/restaurant --baseline .voceval/baseline.json
 ```
+
+Set `VOCEVAL_TIME_SCALE=0.1` to run the suite in a few seconds instead of real
+time while iterating.
 
 To use real providers, copy `.env.example` to `.env`, fill in the keys you have,
 and set `VOCEVAL_PROVIDER_PROFILE=live`.

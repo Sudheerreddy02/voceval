@@ -117,8 +117,8 @@ voceval twilio --agent examples/restaurant_agent.py --public-host my.ngrok.io
 ```
 
 Serves the agent over Twilio Media Streams (8 kHz mu-law, 20 ms frames). Barge-in
-sends a `clear` so the caller actually hears the agent stop. Point a Twilio
-number's stream at the printed URL.
+sends a `clear` so the caller actually hears the agent stop. Full setup in
+[docs/telephony.md](docs/telephony.md).
 
 ## Repo layout
 

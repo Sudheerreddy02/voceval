@@ -30,7 +30,7 @@ async def run_scenario(scenario: Scenario, settings: Settings | None = None) -> 
     settings = settings or Settings.load()
     agent = load_agent(scenario.agent_entrypoint, settings)
     convo = Conversation(
-        agent.orchestrator(),
+        agent.orchestrator(simulated=True),
         scenario.script,
         scenario_name=scenario.name,
         sample_rate=settings.sample_rate,

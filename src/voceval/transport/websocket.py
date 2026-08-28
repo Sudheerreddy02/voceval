@@ -36,7 +36,7 @@ async def _emit_turns(ws, orchestrator: Orchestrator) -> None:
 
 async def _handle(ws, agent_entrypoint: str, settings: Settings) -> None:
     channel = QueueChannel(settings.sample_rate)
-    orchestrator = load_agent(agent_entrypoint, settings).orchestrator()
+    orchestrator = load_agent(agent_entrypoint, settings).orchestrator(simulated=True)
     runner = asyncio.create_task(orchestrator.run(channel))
     emitter = asyncio.create_task(_emit_turns(ws, orchestrator))
 

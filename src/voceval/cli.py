@@ -26,7 +26,7 @@ def chat(agent: str = typer.Option(..., help="Path to an agent entrypoint")) -> 
     from voceval.eval.simulated import SimulatedChannel
 
     settings = Settings.load()
-    orchestrator = load_agent(agent, settings).orchestrator()
+    orchestrator = load_agent(agent, settings).orchestrator(simulated=True)
 
     async def loop() -> None:
         channel = SimulatedChannel(settings.sample_rate)

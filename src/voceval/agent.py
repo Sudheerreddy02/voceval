@@ -17,8 +17,10 @@ class VoiceAgent:
     greeting: str | None = None
     settings: Settings = field(default_factory=Settings.load)
 
-    def orchestrator(self) -> Orchestrator:
-        vad, stt, llm, tts = build_providers(self.settings, self.responder)
+    def orchestrator(self, *, simulated: bool = False) -> Orchestrator:
+        vad, stt, llm, tts = build_providers(
+            self.settings, self.responder, simulated=simulated
+        )
         return Orchestrator(
             vad=vad,
             stt=stt,

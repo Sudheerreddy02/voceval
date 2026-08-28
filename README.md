@@ -82,6 +82,15 @@ voceval simulate --scenario scenarios/restaurant/happy_path_booking.yaml
 voceval eval --suite scenarios/restaurant --baseline .voceval/baseline.json
 ```
 
+Scenarios carry both a fixed `script` and a `persona` + `goal`. The script is the
+default and is what CI runs. With `--driver persona` and a live LLM, an LLM plays
+the caller from the persona and goal instead, so the conversation is different
+every time:
+
+```bash
+voceval simulate --scenario scenarios/restaurant/happy_path_booking.yaml --driver persona
+```
+
 Set `VOCEVAL_TIME_SCALE=0.1` to run the suite in a few seconds instead of real
 time while iterating.
 

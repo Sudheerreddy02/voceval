@@ -45,9 +45,12 @@ WebSocket, Twilio). An eval run uses `SimulatedChannel`, which turns scripted
 caller lines into paced audio frames and watches the agent's outgoing audio so
 the driver knows when a reply has landed.
 
-`Conversation` drives a scenario: greet, then for each caller line, speak it and
-wait for the response, except when the next line is marked as an interruption, in
-which case it starts talking partway through the agent's turn.
+`Conversation` drives a scenario one of two ways. With the script it greets, then
+for each caller line speaks it and waits for the response, except when the next
+line is marked as an interruption, in which case it starts talking partway
+through the agent's turn. With `PersonaCaller` it asks a live LLM for the next
+caller line given the transcript so far, and stops when that model replies
+`[end]` or the turn budget runs out.
 
 `scorers.py` runs the scenario's checks against the transcript, the tool calls
 and the metrics. `regression.py` compares a run to a saved baseline and reports

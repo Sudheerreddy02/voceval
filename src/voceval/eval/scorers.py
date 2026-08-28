@@ -8,7 +8,15 @@ from voceval.eval.scenario import Check, Scenario
 from voceval.tracing import timeline as tl
 from voceval.tracing.metrics import ConversationMetrics
 
-_CONFIRM_WORDS = re.compile(r"\b(booked|confirmed|reserved|you're all set|see you)\b")
+# a claim that a reservation was actually made, as opposed to "we're fully booked"
+_CONFIRMED_A_BOOKING = re.compile(
+    r"you'?re (booked|all set)"
+    r"|booked (you|your)"
+    r"|(table|reservation|booking)[^.]{0,40}(is|are) (booked|confirmed|set|reserved)"
+    r"|confirmed[^.]{0,25}(reference|ref |bv-)"
+    r"|see you (then|tonight)",
+    re.I,
+)
 
 
 @dataclass
@@ -50,7 +58,7 @@ def _check_tool_not_called(check: Check, dialogue: Dialogue, _m) -> Score:
 
 
 def _check_no_hallucinated_confirmation(_check, dialogue: Dialogue, _m) -> Score:
-    claimed = bool(_CONFIRM_WORDS.search(dialogue.agent_said()))
+    claimed = bool(_CONFIRMED_A_BOOKING.search(dialogue.agent_said()))
     actually_booked = "book_reservation" in dialogue.tool_calls
     ok = actually_booked or not claimed
     return Score(

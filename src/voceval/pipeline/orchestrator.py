@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import re
 from collections.abc import AsyncIterator
 
@@ -45,17 +46,22 @@ class Orchestrator:
         self._caller_speaking = False
         self._speak_task: asyncio.Task | None = None
         self._first_audio_done = False
+        self.is_responding = False
+        self.response_done = asyncio.Event()
+        self.response_done.set()
 
     async def run(self, channel: Channel) -> None:
         reader = asyncio.create_task(self._read_inbound(channel))
         try:
             if self.greeting:
+                self.is_responding = True
+                self.response_done.clear()
                 await self._say(channel, 0, self.greeting)
                 self.history.append(Message("assistant", self.greeting))
+                self.is_responding = False
+                self.response_done.set()
             async for transcript in self.stt.transcribe(self._feed_stt()):
                 await self._on_transcript(transcript, channel)
-        except asyncio.CancelledError:
-            pass
         finally:
             reader.cancel()
             if self._speak_task:
@@ -88,6 +94,8 @@ class Orchestrator:
         )
         self.history.append(Message("user", transcript.text))
         self._first_audio_done = False
+        self.is_responding = True
+        self.response_done.clear()
         self._speak_task = asyncio.create_task(self._respond(channel, self._turn))
 
     async def _respond(self, channel: Channel, turn: int) -> None:
@@ -98,14 +106,13 @@ class Orchestrator:
                     return
                 self.timeline.mark(tl.TOOL_CALL, turn, name=tool_call.name)
                 result = await self.tools.call(tool_call)
-                self.history.append(
-                    Message("assistant", "", tool_calls=[tool_call])
-                )
+                self.history.append(Message("assistant", "", tool_calls=[tool_call]))
                 self.history.append(
                     Message("tool", result.content, tool_call_id=tool_call.id)
                 )
-        except asyncio.CancelledError:
-            raise
+        finally:
+            self.is_responding = False
+            self.response_done.set()
 
     async def _stream_reply(self, channel: Channel, turn: int) -> ToolCall | None:
         self.timeline.mark(tl.LLM_START, turn)
@@ -156,10 +163,8 @@ class Orchestrator:
         self.timeline.mark(tl.BARGE_IN, turn)
         if self._speak_task and not self._speak_task.done():
             self._speak_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._speak_task
-            except asyncio.CancelledError:
-                pass
         await channel.stop_playback()
         self.timeline.mark(tl.AGENT_STOPPED, turn)
         if self.turns and self.turns[-1].speaker == Speaker.AGENT:
